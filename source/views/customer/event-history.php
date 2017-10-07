@@ -32,14 +32,7 @@ use \yii\widgets\Pjax;
                         'date',
                         'hour_from',
                         'hour_to',
-                        'company.slot',
-                        [
-                            'label' => 'Customer Name',
-                            'value' => function ($data) {
-//                        \app\components\HelperFunctions::output($data);
-                                return $data->customer->lastName . ' - ' . $data->customer->firstName;
-                            }
-                        ],
+//                        'company.slot',
                         [
                             'label' => 'Animale',
                             'value' => function ($data) {

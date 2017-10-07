@@ -40,7 +40,7 @@ class Calendar extends CalendarModel
      *
      * @return ActiveDataProvider
      */
-    public function search($params, $daysObj = null)
+    public function search($params, $daysObj = null, $companyId = null)
     {
 //        HelperFunctions::output($daysObj);
         $query = CalendarModel::find();
@@ -75,6 +75,9 @@ class Calendar extends CalendarModel
         $query->andFilterWhere(['like', 'hour_from', $this->hour_from])
             ->andFilterWhere(['like', 'hour_to', $this->hour_to])
             ->andFilterWhere(['like', 'description', $this->description]);
+
+        if ($companyId != null)
+            $query->andFilterWhere(['=', 'company_id', $companyId]);
 
         if ($daysObj != null) {
 //            HelperFunctions::output($daysObj);

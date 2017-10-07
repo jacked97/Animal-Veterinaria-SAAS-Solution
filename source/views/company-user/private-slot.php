@@ -11,6 +11,8 @@ use yii\helpers\Url;
 
 $companyData = \app\components\HelperFunctions::getCompanyData();
 $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSelect($companyData->id);
+
+
 ?>
 
 
@@ -25,12 +27,19 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
 <script src="https://cdn.jsdelivr.net/sweetalert2/6.1.1/sweetalert2.min.js"></script>
 
 
+<style>
+    .fc-time-grid-event.fc-short .fc-time:before {
+        content: attr(data-full); /* ...instead, display only the start time */
+    }
+</style>
+
+
 <div class="row">
     <div class="col-md-12">
         <div class="card">
 
             <div class="header">
-                <h4 class="title">Pianifica</h4>
+                <h4 class="title">Non prenotabile</h4>
             </div>
 
             <div class="content">
@@ -118,7 +127,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Failed to insert some private slots - details below</h4>
+                <h4 class="modal-title" id="myModalLabel">Appuntamenti presenti nel range selezionato </h4>
             </div>
             <div class="modal-body" style="height: 300px;overflow-y: scroll;">
                 <table class="table table-hover">
@@ -150,18 +159,19 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
 <script>
 
     var calendar = null;
-
+    var user_id = <?= $newPrivateSlot->veterinario ?>;
     $(document).ready(function () {
 
         var calendarData = <?= $calendarData ?>;
         var modal = $('#myModal');
         var appointmentform_hours_from = $("#appointmentform-hours_from");
         var appointmentform_hours_to = $("#appointmentform-hours_to");
+        var daySlotSelected = false;
 
         var selected_time_from, selected_time_to;
 
-        log(calendarData.event_types["2016-11-16"]);
-        console.log(calendarData);
+//        log(calendarData.event_types["2016-11-16"]);
+//        console.log(calendarData);
 
         calendar = $('#calendar').fullCalendar({
             header: {
@@ -169,40 +179,43 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
                 center: 'title',
                 right: 'month,agendaWeek,agendaDay,listWeek'
             },
+            columnFormat: 'ddd D/M',
             defaultView: 'agendaWeek',
             selectable: true,
             selectHelper: true,
             expandThrough: false,
             events: calendarData.full_calendar_object,
-            timezone: "local",
+            timezone: "<?= \app\components\HelperFunctions::getTimeZone()?>",
             selectHelper: true,
             scrollTime: '09:00:00',
             editable: true,
             eventOverlap: false,
             selectOverlap: false,
             dayRender: function (date, cell) {
-                console.log("day render");
                 var currentDate = moment(date).format('YYYY-MM-DD');
                 if (calendarData.event_types[currentDate] == true) {
                     cell.css("background-color", "rgba(128,128,128,0.4)");
-                    console.log("private");
+//                    console.log("private");
                 }
                 else if (!(typeof calendarData.event_types[currentDate] == "undefined")) {
                     cell.css("background-color", "rgba(0, 128, 0, 0.4)");
-                    console.log("public");
+//                    console.log("public");
                 }
             },
             select: function (start, end, jsEvent, view) {
-                modal.appendTo("body").modal('show');
+                if (start.hasTime()) {
+                    modal.appendTo("body").modal('show');
+                    var time_from = moment(start).format('YYYY-MM-DD HH:mm');
+                    var time_to = moment(end).format('YYYY-MM-DD HH:mm');
 
-                var time_from = moment(start).format('YYYY-MM-DD HH:mm');
-                var time_to = moment(end).format('YYYY-MM-DD HH:mm');
+                    selected_time_from = time_from;
+                    selected_time_to = time_to;
 
-                selected_time_from = time_from;
-                selected_time_to = time_to;
+                    appointmentform_hours_from.val(time_from);
+                    appointmentform_hours_to.val(time_to);
 
-                appointmentform_hours_from.val(time_from);
-                appointmentform_hours_to.val(time_to);
+//                console.log(time_from);
+//                console.log(time_to);
 //                if (window.confirm("Create this event?")) {
 //                    $("#calendar").fullCalendar("removeEvents", "chunked-helper");
 //                    $("#calendar").fullCalendar("addEventSource", chunk({start: start, end: end}, "event"));
@@ -210,6 +223,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
 //                } else {
 //                    $("#calendar").fullCalendar("removeEvents", "chunked-helper");
 //                }
+                }
             },
             eventDrop: function (event, delta, revertFunc, jsEvent, ui, view) {
                 updateEventDB(event);
@@ -218,7 +232,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
                 updateEventDB(event);
             },
             eventClick: function (event, jsEvent, view) {
-                console.log(event);
+//                console.log(event);
                 var sawalMy = swal.queue([{
                     title: 'Delete Event',
                     showCancelButton: true,
@@ -237,6 +251,12 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
                         })
                     }
                 }]);
+            },
+            dayClick: function (date, jsEvent, view) {
+                if (!date.hasTime())
+                    addAllDayEvent(moment(date).format('YYYY-MM-DD'));
+//                console.log("dayClick: ");
+                console.log(date.hasTime());
             }
 
         });
@@ -244,7 +264,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
 
         $('body').on('beforeSubmit', 'form#add-new-private-slots', function () {
             $("#appointmentform-veterinario").prop('disabled', false);
-            var vetName = "Pianifica";
+            var vetName = "Non prenotabile";
             $(this).find('[type="submit"]').toggleClass('m-progress');
             var form = $(this);
             // return false if form still have some validation errors
@@ -257,6 +277,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
                 type: 'POST',
                 data: form.serialize(),
                 success: function (response) {
+                    response = JSON.parse(response);
                     log(response);
                     if (response.result == 1) {
 
@@ -318,6 +339,147 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
         });
     }
 
+    function addAllDayEvent(date) {
+//        var date = moment(event.start).format('YYYY-MM-DD');
+
+        swal({
+//            title: 'Are you sure?',
+//            text: "You won't be able to revert this!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Imposta come non prenotatile',
+            cancelButtonText: 'Imposta con libero',
+            confirmButtonClass: 'btn btn-success',
+            cancelButtonClass: 'btn btn-warning',
+            buttonsStyling: false
+        }).then(function () {
+            //make private
+            var data = {
+                'date': date,
+                'user_id': user_id
+            };
+            $.post("<?= Url::to(['company-user/ajax-private-slot-set-all-day']) ?>", data, function (data) {
+                data = JSON.parse(data);
+                if (data.result == 1) {
+                    customer = data.data.customer;
+                    privateS = data.data.private;
+                    if (customer.length > 0) {
+                        var table = "<table class='table table-hover'>";
+                        table += "<tr><td>Date</td><td>Hour From</td><td>Hour To</td></tr>";
+                        $.each(data.data.customer, function (key, value) {
+                            table += "<tr><td>" + value.date + "</td><td>" + value.hour_from + "</td><td>" + value.hour_to + "</td></tr>";
+                        });
+                        table += "</table>";
+
+                        swal({
+                            title: 'Customers event exist!',
+                            html: table,
+                            type: 'error'
+                        });
+                    } else if (privateS.length > 0) {
+                        swal({
+                            title: 'Are you sure?',
+                            text: "questa azione annullerà le aree Non Prenotabili già presenti in questo giorno!!!",
+                            type: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Imposta come non prenotatile!'
+                        }).then(function () {
+                            var data = {
+                                'date': date,
+                                'user_id': user_id,
+                                'confirm': '1'
+                            };
+                            $.post("<?= Url::to(['company-user/ajax-private-slot-set-all-day']) ?>", data, function (data) {
+                                data = JSON.parse(data);
+                                calendar.fullCalendar('removeEvents', function (event) {
+                                    console.log(date === moment(event.start).format('YYYY-MM-DD'));
+                                    if (date === moment(event.start).format('YYYY-MM-DD'))
+                                        return true;
+                                });
+
+                                calendar.fullCalendar('renderEvent',
+                                    data.data,
+                                    true // make the event "stick"
+                                );
+                            });
+                        })
+                    }
+//                    console.log(customer);
+//                    console.log(privateS);
+                } else {
+                    calendar.fullCalendar('renderEvent',
+                        data.data,
+                        true // make the event "stick"
+                    );
+                }
+
+            });
+        }, function (dismiss) {
+            // set them free
+            // dismiss can be 'cancel', 'overlay',
+            // 'close', and 'timer'
+            if (dismiss === 'cancel') {
+                var data = {
+                    'date': date,
+                    'user_id': user_id
+                };
+                $.post("<?= Url::to(['company-user/ajax-free-slot-set-all-day']) ?>", data, function (data) {
+                    data = JSON.parse(data);
+//                    console.log(data);
+                    if (data.result == 1) {
+                        calendar.fullCalendar('removeEvents', function (event) {
+                            console.log(date === moment(event.start).format('YYYY-MM-DD'));
+                            if (date === moment(event.start).format('YYYY-MM-DD'))
+                                return true;
+                        });
+                        $.notify({
+                            message: "Event data has been updated."
+
+                        }, {
+                            type: 'success',
+                            timer: 2000
+                        });
+                    } else {
+                        var table = "<table class='table table-hover'>";
+                        table += "<tr><td>Date</td><td>Hour From</td><td>Hour To</td></tr>";
+                        $.each(data.data, function (key, value) {
+                            table += "<tr><td>" + value.date + "</td><td>" + value.hour_from + "</td><td>" + value.hour_to + "</td></tr>";
+                        });
+                        table += "</table>";
+
+                        swal({
+                            title: 'Customers event exist!',
+                            html: table,
+                            type: 'error'
+                        })
+                    }
+                });
+            }
+        });
+
+//        var data = {
+//            'Calendar[hour_from]': startHour,
+//            'Calendar[hour_to]': endHour,
+//            'Calendar[date]': date,
+//        };
+//
+//        $.post("<?//= Url::to(['company-user/ajax-edit-event']) ?>//?event_id=" + event.id, data, function (data) {
+//            data = JSON.parse(data);
+//            if (data.result == 1)
+//                $.notify({
+//                    message: "Event data has been updated."
+//
+//                }, {
+//                    type: 'success',
+//                    timer: 2000
+//                });
+//        });
+    }
+
 
     function selectVet(id) {
         $("#input-form-fields").show('200');
@@ -353,7 +515,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
 
     $('body').on('beforeSubmit', 'form#add-new-custom-private-slots', function () {
         var formobj = this;
-        var vetName = "Pianifica";
+        var vetName = "Non prenotabile";
         $(this).find('[type="submit"]').toggleClass('m-progress');
         var form = $(this);
         // return false if form still have some validation errors
@@ -367,13 +529,13 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
             type: 'POST',
             data: form.serialize(),
             success: function (response) {
-                console.log(response);
                 if (typeof response === 'string' || response instanceof String)
                     response = JSON.parse(response);
+//                console.log(response);
                 if (response.result == 1) {
-                    console.log(response);
+//                    console.log(response);
                     $.each(response.data, function (key, value) {
-                        console.log(value);
+//                        console.log(value);
                         calendar.fullCalendar('renderEvent',
                             value,
                             true // make the event "stick"

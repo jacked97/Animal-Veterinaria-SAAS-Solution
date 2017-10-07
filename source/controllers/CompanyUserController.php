@@ -15,6 +15,8 @@ use yii\base\DynamicModel;
 
 class CompanyUserController extends \yii\web\Controller
 {
+
+
     public function actionIndex()
     {
         return $this->render('index');
@@ -36,6 +38,7 @@ class CompanyUserController extends \yii\web\Controller
 
     public function actionEventList()
     {
+        $companyData = HelperFunctions::getCompanyData();
         $newAppointmentForm = new AppointmentForm();
 
         $modelForFormDays = new DynamicModel(['days', 'veterinario', 'from_date', 'to_date', 'private']);
@@ -50,7 +53,7 @@ class CompanyUserController extends \yii\web\Controller
 
 
         $searchModel = new CalendarSearch();
-        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams, $modelForFormDays);
+        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams, $modelForFormDays, $companyData->id);
 
 
         return $this->render('event-list', [
@@ -154,7 +157,7 @@ class CompanyUserController extends \yii\web\Controller
 
     public function actionAjaxPrivateSlotSet()
     {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+//        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         $companyData = HelperFunctions::getCompanyData();
         $newPrivateSlot = new AppointmentForm();
@@ -165,6 +168,10 @@ class CompanyUserController extends \yii\web\Controller
             $startDate = new \DateTime($newPrivateSlot->hours_from);
             $endDate = new \DateTime($newPrivateSlot->hours_to);
 
+            if ($startDate->format('Y-m-d') != $endDate->format('H:i') && $endDate->format('H:i') == "00:00") {
+                $endDate->modify('-1 minute');
+            }
+
             while ($startDate <= $endDate) {
 
                 $storePrivateSlot = new Calendar();
@@ -172,10 +179,10 @@ class CompanyUserController extends \yii\web\Controller
                 $storePrivateSlot->hour_from = $startDate->format('H:i');
                 $storePrivateSlot->hour_to = $endDate->format('H:i');
                 $storePrivateSlot->private = 1;
-                $storePrivateSlot->description = "Pianifica";
+                $storePrivateSlot->description = "Non prenotabile";
                 $storePrivateSlot->user_id = $newPrivateSlot->veterinario;
                 $storePrivateSlot->company_id = $companyData->id;
-
+//
                 if (!$storePrivateSlot->save()) {
                     echo json_encode($storePrivateSlot->errors);
                     break;
@@ -196,6 +203,138 @@ class CompanyUserController extends \yii\web\Controller
             //print_r($newPrivateSlot);
         }
         echo json_encode(array('result' => 1, 'data' => $addedSlots));
+    }
+
+    /**
+     *
+     */
+    public function actionAjaxFreeSlotSetAllDay()
+    {
+        $companyData = HelperFunctions::getCompanyData();
+//        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (isset($_POST['date']) && isset($_POST['user_id'])) {
+
+            $date = $_POST['date'];
+            $user_id = $_POST['user_id'];
+            $events = array();
+            $verifyEventExsist = Calendar::find()->where([
+                'user_id' => $user_id,
+                'company_id' => $companyData->id,
+                'date' => $date
+            ])->all();
+            $eventIds = array();
+
+            foreach ($verifyEventExsist as $event) {
+                if ($event->private == 0) {
+                    array_push($events, array(
+                        'date' => $event->date,
+                        'hour_from' => $event->hour_from,
+                        'hour_to' => $event->hour_to
+                    ));
+                } else {
+                    array_push($eventIds, $event->id);
+                }
+            }
+            if (sizeof($events) == 0) {
+                $idsJoined = implode(",", $eventIds);
+                Calendar::deleteAll("id IN ($idsJoined)");
+                echo json_encode(array('result' => 1));
+            } else {
+                echo json_encode(array('result' => 0, 'data' => $events));
+            }
+        }
+
+    }
+
+    public function actionAjaxPrivateSlotSetAllDay()
+    {
+        $companyData = HelperFunctions::getCompanyData();
+//        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (isset($_POST['date']) && isset($_POST['user_id'])) {
+            $confirm = "";
+            if (isset($_POST['confirm']))
+                $confirm = $_POST['confirm'];
+
+//            HelperFunctions::output($confirm);
+            $date = $_POST['date'];
+            $user_id = $_POST['user_id'];
+            $events = array();
+            $events['customer'] = array();
+            $events['private'] = array();
+            $verifyEventExsist = Calendar::find()->where([
+                'user_id' => $user_id,
+                'company_id' => $companyData->id,
+                'date' => $date
+            ])->all();
+            $eventIds = array();
+
+            foreach ($verifyEventExsist as $event) {
+                if ($event->private == '1')
+                    array_push($events['private'], array(
+                        'date' => $event->date,
+                        'hour_from' => $event->hour_from,
+                        'hour_to' => $event->hour_to,
+                        'private' => $event->private
+                    ));
+                else
+                    array_push($events['customer'], array(
+                        'date' => $event->date,
+                        'hour_from' => $event->hour_from,
+                        'hour_to' => $event->hour_to,
+                        'private' => $event->private
+                    ));
+                array_push($eventIds, $event->id);
+            }
+            if (sizeof($events['customer']) == 0 && sizeof($events['private']) == 0) {
+                $storeEvent = new Calendar();
+                $storeEvent->user_id = $user_id;
+                $storeEvent->date = $date;
+                $storeEvent->hour_from = "00:00";
+                $storeEvent->hour_to = "23:59";
+                $storeEvent->description = "Pianifica";
+                $storeEvent->company_id = $companyData->id;
+                $storeEvent->private = 1;
+
+                if (!$storeEvent->save())
+                    print_r($storeEvent->errors);
+                else {
+                    $resultSlot['start'] = $storeEvent->date . " " . $storeEvent->hour_from;
+                    $resultSlot['end'] = $storeEvent->date . " " . $storeEvent->hour_to;
+                    $resultSlot['title'] = $storeEvent->description;
+                    $resultSlot['backgroundColor'] = 'rgba(128,128,128,0.4)';
+                    $resultSlot['borderColor'] = 'rgba(128,128,128,0.6)';
+                    echo json_encode(array('result' => 2, 'data' => $resultSlot));
+                }
+
+
+            } else if (sizeof($events['customer']) == 0 && $confirm == 1) {
+                $idsJoined = implode(",", $eventIds);
+                Calendar::deleteAll("id IN ($idsJoined)");
+
+                $storeEvent = new Calendar();
+                $storeEvent->user_id = $user_id;
+                $storeEvent->date = $date;
+                $storeEvent->hour_from = "00:00";
+                $storeEvent->hour_to = "23:59";
+                $storeEvent->description = "Pianifica";
+                $storeEvent->company_id = $companyData->id;
+                $storeEvent->private = 1;
+                if (!$storeEvent->save())
+                    print_r($storeEvent->errors);
+                else {
+                    $resultSlot['start'] = $storeEvent->date . " " . $storeEvent->hour_from;
+                    $resultSlot['end'] = $storeEvent->date . " " . $storeEvent->hour_to;
+                    $resultSlot['title'] = $storeEvent->description;
+                    $resultSlot['backgroundColor'] = 'rgba(128,128,128,0.4)';
+                    $resultSlot['borderColor'] = 'rgba(128,128,128,0.6)';
+                    echo json_encode(array('result' => 1, 'data' => $resultSlot));
+                }
+            } else
+                echo json_encode(array('result' => 1, 'data' => $events));
+        }
+
     }
 
     public function actionAjaxPrivateSlotCustomDateSet()

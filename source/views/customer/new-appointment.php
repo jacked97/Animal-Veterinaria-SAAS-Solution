@@ -21,13 +21,18 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/sweetalert2/6.1.1/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/sweetalert2/6.1.1/sweetalert2.min.js"></script>
 
+<style>
+    .fc-time-grid-event.fc-short .fc-time:before {
+        content: attr(data-full); /* ...instead, display only the start time */
+    }
 
+</style>
 <div class="row">
     <div class="col-md-12">
         <div class="card">
 
             <div class="header">
-                <h4 class="title">Nuovo appuntamento</h4>
+                <h4 class="title">Prenotazione Visite</h4>
             </div>
 
 
@@ -112,6 +117,7 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
             slotDuration: '00:' + timeDifferenceAllowedMinutes + ':00',
             scrollTime: '09:00:00',
             eventStartEditable: false,
+            columnFormat: 'ddd D/M',
             selectable: true,
             selectHelper: true,
             timezone: "local",

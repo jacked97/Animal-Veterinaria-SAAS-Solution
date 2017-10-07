@@ -19,6 +19,11 @@ use yii\helpers\Url;
     .fc-day {
         background-color: background-color: rgba(0, 132, 0, 0.31);;
     }
+
+    .fc-time-grid-event.fc-short .fc-time:before {
+        content: attr(data-full); /* ...instead, display only the start time */
+    }
+
 </style>
 
 
@@ -136,7 +141,7 @@ use yii\helpers\Url;
                             </label>
                         </div>
                         <div class="col-md-8">
-                            <p id="modal-view-appointment-customer-email"></p>
+                            <a id="modal-view-appointment-customer-email"></a>
                         </div>
                     </div>
 
@@ -174,6 +179,7 @@ use yii\helpers\Url;
                 center: 'title',
                 right: 'month,agendaWeek,agendaDay,listWeek'
             },
+            columnFormat: 'ddd D/M',
 //            defaultDate: '2016-09-12',
             navLinks: true, // can click day/week names to navigate views
             editable: false,
@@ -205,6 +211,7 @@ use yii\helpers\Url;
                     modalFieldsCustomerLastname.text(eventData.customer_last_name);
                     modalFieldsCustomerMobile.text(eventData.customer_mobile);
                     modalFieldsCustomerEmail.text(eventData.customer_email);
+                    modalFieldsCustomerEmail.attr("href", "mailto:" + eventData.customer_email);
 
                     modal.appendTo("body").modal('show');
                 }

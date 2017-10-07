@@ -39,7 +39,7 @@ class User extends UserModel
      *
      * @return ActiveDataProvider
      */
-    public function search($params)
+    public function search($params, $companyId = null)
     {
         $query = UserModel::find();
 
@@ -56,6 +56,9 @@ class User extends UserModel
             // $query->where('0=1');
             return $dataProvider;
         }
+
+        if ($companyId != null)
+            $query->where(['company_id' => $companyId]);
 
         // grid filtering conditions
         $query->andFilterWhere([

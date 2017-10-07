@@ -13,6 +13,12 @@ use app\staticcontent\Navbar as CustomNavBar;
 AppAsset::register($this);
 $navbar = new CustomNavBar();
 //\app\components\HelperFunctions::output($navbar->navbar());
+$showSideBar = false;
+if ((Yii::$app->controller->id != 'company' && Yii::$app->controller->action->id != "login") &&
+    (Yii::$app->controller->id != 'site' && Yii::$app->controller->action->id != "login")
+)
+    $showSideBar = true;
+
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -44,26 +50,28 @@ $navbar = new CustomNavBar();
     //    NavBar::end();
     ?>
 
+    <?php if ($showSideBar): ?>
+        <div class="sidebar" data-background-color="white" data-active-color="danger">
 
-    <div class="sidebar" data-background-color="white" data-active-color="danger">
+            <!--
+                Tip 1: you can change the color of the sidebar's background using: data-background-color="white | black"
+                Tip 2: you can change the color of the active button using the data-active-color="primary | info | success | warning | danger"
+            -->
 
-        <!--
-            Tip 1: you can change the color of the sidebar's background using: data-background-color="white | black"
-            Tip 2: you can change the color of the active button using the data-active-color="primary | info | success | warning | danger"
-        -->
+            <div class="sidebar-wrapper">
+                <div class="logo">
+                    <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="simple-text">
+                        <?= $companyName ?>
+                    </a>
+                </div>
 
-        <div class="sidebar-wrapper">
-            <div class="logo">
-                <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="simple-text">
-                    <?= $companyName ?>
-                </a>
+                <?= $navbar->generateHTML($navbar->navbar()) ?>
+
             </div>
 
-            <?= $navbar->generateHTML($navbar->navbar()) ?>
         </div>
-    </div>
-
-    <div class="main-panel">
+    <?php endif; ?>
+    <div class="main-panel" style="<?php if (!$showSideBar) echo "width:100%;"; ?>">
         <nav class="navbar navbar-default">
             <div class="container-fluid">
                 <div class="navbar-header">
@@ -73,7 +81,7 @@ $navbar = new CustomNavBar();
                         <span class="icon-bar bar2"></span>
                         <span class="icon-bar bar3"></span>
                     </button>
-                    <a class="navbar-brand" href="#">Veterinario appuntamento</a>
+                    <a class="navbar-brand" href="#">Gestione visite</a>
                 </div>
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav navbar-right">

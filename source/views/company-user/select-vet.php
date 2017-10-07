@@ -8,6 +8,9 @@ use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\Url;
 
+$companyData = \app\components\HelperFunctions::getCompanyData();
+$vetsByCompany = \app\models\database\User::find()->where(['company_id' => $companyData->id])->all();
+
 ?>
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.0.1/fullcalendar.min.css" rel="stylesheet">
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.0.1/fullcalendar.print.css" media="print" rel="stylesheet">
@@ -27,14 +30,23 @@ use yii\helpers\Url;
         <div class="card">
 
             <div class="header">
-                <h4 class="title">Calendario</h4>
-                <h5>Select Veterinario</h5>
+                <h4 class="title">Calendario - Scegli il Veterinario</h4>
             </div>
             <div class="content">
                 <div>
                     <div class="list-group">
-                        <?php foreach ($users as $key => $user): ?>
-                            <a href="<?= Url::to(['', 'user_id' => $key]) ?>" class="list-group-item"><?= $user ?></a>
+                        <?php foreach ($vetsByCompany as $key => $user): ?>
+                            <a href="<?= Url::to(['', 'user_id' => $user->id]) ?>" class="list-group-item">
+                                <?php
+                                $imgUrl = $user->image;
+                                if($imgUrl == "")
+                                    $imgUrl = "default.png";
+                                $imgUrl = Yii::getAlias('@web') . "/" . \app\controllers\VeterinarioController::$VET_IMAGE_PATH . $imgUrl;
+                                ?>
+                                <img src="<?= $imgUrl ?>"
+                                     style="max-height: 100px; max-width: 80px;margin-right: 20px;"/>
+                                <?= $user->lastName . ' - ' . $user->firstName ?>
+                            </a>
                         <?php endforeach; ?>
                     </div>
                 </div>

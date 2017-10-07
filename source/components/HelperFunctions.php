@@ -47,4 +47,21 @@ class HelperFunctions
             echo '<p class="alert alert-' . $key . '">' . $message[0] . '</p>';
         }
     }
+
+    public static function getTimeZone()
+    {
+        return date_default_timezone_get();
+    }
+
+    public static function randomString()
+    {
+        $s = strtoupper(md5(uniqid(rand(), true)));
+        $guidText =
+            substr($s, 0, 8) . '-' .
+            substr($s, 8, 4) . '-' .
+            substr($s, 12, 4) . '-' .
+            substr($s, 16, 4) . '-' .
+            substr($s, 20);
+        return $guidText;
+    }
 }

@@ -22,6 +22,9 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
     .fc-day {
         background-color: background-color: rgba(0, 132, 0, 0.31);;
     }
+    .fc-time-grid-event.fc-short .fc-time:before {
+        content: attr(data-full); /* ...instead, display only the start time */
+    }
 </style>
 
 
@@ -344,6 +347,8 @@ $veterinarioSelect = \app\DatabaseHelpers\DatabaseHelperUsers::getAllUsersForSel
                 center: 'title',
                 right: 'month,agendaWeek,agendaDay,listWeek'
             },
+            columnFormat: 'ddd D/M',
+            defaultView: 'agendaWeek',
 //            defaultDate: '2016-09-12',
             navLinks: true, // can click day/week names to navigate views
             editable: false,

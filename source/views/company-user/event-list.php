@@ -79,66 +79,68 @@ $this->registerJs(
                         </div>
                         <?php ActiveForm::end(); ?>
                     </div>
-                    <?= GridView::widget([
-                        'dataProvider' => $dataProvider,
-                        'columns' => [
-                            ['class' => 'yii\grid\SerialColumn'],
+                    <div style="overflow-x: scroll;">
+                        <?= GridView::widget([
+                            'dataProvider' => $dataProvider,
+                            'columns' => [
+                                ['class' => 'yii\grid\SerialColumn'],
 
 //                            'id',
-                            'date',
-                            'hour_from',
-                            'hour_to',
-                            [
-                                'label' => 'Customer Name',
-                                'value' => function ($data) {
+                                'date',
+                                'hour_from',
+                                'hour_to',
+                                [
+                                    'label' => 'Customer Name',
+                                    'value' => function ($data) {
 //                        \app\components\HelperFunctions::output($data);
-                                    return $data->customer->lastName . ' - ' . $data->customer->firstName;
-                                }
-                            ],
-                            [
-                                'label' => 'Animale',
-                                'value' => function ($data) {
-                                    return $data->type->title;
-                                }
-                            ],
-                            [
-                                'label' => 'Servizio erogato',
-                                'value' => function ($data) {
-                                    return $data->activity->title;
-                                }
-                            ],
-                            [
-                                'label' => 'Veterinario',
-                                'value' => function ($data) {
-                                    return $data->user->lastName . ' - ' . $data->user->firstName;
-                                }
-                            ],
-                            // 'activity_id',
-                            // 'description:ntext',
-                            // 'user_id',
-                            // 'customer_id',
-                            // 'private',
-                            [
-                                'attribute' => 'Edit',
-                                'format' => 'raw',
-                                'value' => function ($model) {
-                                    return "<a onclick='editEventModal(" . $model->id . ")'>" .
-                                    "<img style='height:32px;' src='" . Yii::getAlias('@web') . "/icons/edit_icon.png'/>" .
-                                    "</a>";
-                                }
-                            ],
-                            [
-                                'attribute' => 'Delete',
-                                'format' => 'raw',
-                                'value' => function ($model) {
-                                    return "<a href='" . Url::to(['delete', 'id' => $model->id, 'user_id' => $model->user_id, 'company_id' => $model->company_id]) . "'>" .
-                                    "<img style='height:32px;' src='" . Yii::getAlias('@web') . "/icons/delete_icon.png'/>" .
-                                    "</a>";
-                                }
-                            ],
+                                        return $data->customer->lastName . ' - ' . $data->customer->firstName;
+                                    }
+                                ],
+                                [
+                                    'label' => 'Animale',
+                                    'value' => function ($data) {
+                                        return $data->type->title;
+                                    }
+                                ],
+                                [
+                                    'label' => 'Servizio erogato',
+                                    'value' => function ($data) {
+                                        return $data->activity->title;
+                                    }
+                                ],
+                                [
+                                    'label' => 'Veterinario',
+                                    'value' => function ($data) {
+                                        return $data->user->lastName . ' - ' . $data->user->firstName;
+                                    }
+                                ],
+                                // 'activity_id',
+                                // 'description:ntext',
+                                // 'user_id',
+                                // 'customer_id',
+                                // 'private',
+                                [
+                                    'attribute' => 'Edit',
+                                    'format' => 'raw',
+                                    'value' => function ($model) {
+                                        return "<a onclick='editEventModal(" . $model->id . ")'>" .
+                                        "<img style='height:32px;' src='" . Yii::getAlias('@web') . "/icons/edit_icon.png'/>" .
+                                        "</a>";
+                                    }
+                                ],
+                                [
+                                    'attribute' => 'Delete',
+                                    'format' => 'raw',
+                                    'value' => function ($model) {
+                                        return "<a href='" . Url::to(['delete', 'id' => $model->id, 'user_id' => $model->user_id, 'company_id' => $model->company_id]) . "'>" .
+                                        "<img style='height:32px;' src='" . Yii::getAlias('@web') . "/icons/delete_icon.png'/>" .
+                                        "</a>";
+                                    }
+                                ],
 //                            ['class' => 'yii\grid\ActionColumn', 'template' => '{update} {delete}'],
 
-                        ]]); ?>
+                            ]]); ?>
+                    </div>
                 </div>
 
                 <?php Pjax::end(); ?>
@@ -258,7 +260,7 @@ $this->registerJs(
 
 
                     form.trigger("reset");
-                    $.pjax.reload({container:'#event-lists'});
+                    $.pjax.reload({container: '#event-lists'});
 
                     $.notify({
                         message: "Event data has been updated."

@@ -26,6 +26,9 @@ class User extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      */
+
+    public $file;
+
     public static function tableName()
     {
         return 'user';
@@ -43,6 +46,7 @@ class User extends \yii\db\ActiveRecord
             [['firstName', 'lastName', 'email', 'image'], 'string', 'max' => 100],
             [['mobile'], 'string', 'max' => 50],
             [['slot'], 'string', 'max' => 10],
+            ['file', 'file'],
             [['company_id'], 'exist', 'skipOnError' => true, 'targetClass' => Company::className(), 'targetAttribute' => ['company_id' => 'id']],
         ];
     }

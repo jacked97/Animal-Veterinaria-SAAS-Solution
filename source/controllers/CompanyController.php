@@ -78,6 +78,7 @@ class CompanyController extends \yii\web\Controller
         }
         return $this->render('/site/login', [
             'model' => $model,
+            'fromCompanyController' => true
         ]);
     }
 

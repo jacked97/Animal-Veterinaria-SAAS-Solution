@@ -9,12 +9,15 @@ use app\models\search\User as UserSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
 
 /**
  * VeterinarioController implements the CRUD actions for User model.
  */
 class VeterinarioController extends Controller
 {
+    public static $VET_IMAGE_PATH = "vet_profile_img/";
+
     /**
      * @inheritdoc
      */
@@ -36,8 +39,10 @@ class VeterinarioController extends Controller
      */
     public function actionIndex()
     {
+        $companyData = HelperFunctions::getCompanyData();
         $searchModel = new UserSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $companyData->id);
+
 
         return $this->render('index', [
             'searchModel' => $searchModel,
@@ -70,8 +75,20 @@ class VeterinarioController extends Controller
         $model->timestamp = HelperFunctions::currMysqlDateTime();
         $model->slot = Yii::$app->user->identity->slot;
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id, 'company_id' => $model->company_id]);
+
+//
+//        if ($model->validate()) {
+//
+//        }
+        if ($model->load(Yii::$app->request->post())) {
+            $model->file = UploadedFile::getInstance($model, 'file');
+            if ($model->file != null) {
+                $fileName = HelperFunctions::randomString() . $model->file->baseName . '.' . $model->file->extension;
+                $model->file->saveAs(self::$VET_IMAGE_PATH . $fileName);
+                $model->image = $fileName;
+            }
+            if ($model->save())
+                return $this->redirect(['view', 'id' => $model->id, 'company_id' => $model->company_id]);
         } else {
             return $this->render('create', [
                 'model' => $model,
@@ -90,8 +107,15 @@ class VeterinarioController extends Controller
     {
         $model = $this->findModel($id, $company_id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id, 'company_id' => $model->company_id]);
+        if ($model->load(Yii::$app->request->post())) {
+            $model->file = UploadedFile::getInstance($model, 'file');
+            if ($model->file != null) {
+                $fileName = HelperFunctions::randomString() . $model->file->baseName . '.' . $model->file->extension;
+                $model->file->saveAs(self::$VET_IMAGE_PATH . $fileName);
+                $model->image = $fileName;
+            }
+            if ($model->save())
+                return $this->redirect(['view', 'id' => $model->id, 'company_id' => $model->company_id]);
         } else {
             return $this->render('update', [
                 'model' => $model,
